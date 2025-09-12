@@ -27,13 +27,14 @@ def run_script():
     script = data.get("script")
     args = data.get("args", [])
 
-    cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/Documents/automation/{script} {" ".join(args)}"'
+    cmd = f"ssh {mac_user}@{mac_ip} 'osascript ~/Documents/automation/{script} {' '.join([repr(a) for a in args])}'"
 
     try:
         open_terminal_and_run(cmd)
         return jsonify({"status": "success", "command": cmd})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5001, debug=True)
