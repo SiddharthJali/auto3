@@ -1,24 +1,21 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import subprocess
 import platform
 
 app = Flask(__name__)
+CORS(app)
 
 def open_terminal_and_run(command):
     system = platform.system()
 
     if system == "Windows":
-        # Opens a new cmd window and runs command
         subprocess.Popen(["start", "cmd", "/k", command], shell=True)
-
-    elif system == "Darwin":  # macOS
-        # Opens Terminal and runs command
+    elif system == "Darwin":
         osa = f'tell app "Terminal" to do script "{command}"'
         subprocess.Popen(["osascript", "-e", osa])
-
     elif system == "Linux":
         subprocess.Popen(["x-terminal-emulator", "-e", command])
-
     else:
         raise Exception(f"Unsupported system: {system}")
 
@@ -27,10 +24,9 @@ def run_script():
     data = request.json
     mac_user = data.get("mac_user")
     mac_ip = data.get("mac_ip")
-    script = data.get("script")   # e.g., register.scpt
+    script = data.get("script")
     args = data.get("args", [])
 
-    # Build SSH command
     cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/automation/{script} {" ".join(args)}"'
 
     try:

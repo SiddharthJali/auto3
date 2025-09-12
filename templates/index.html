@@ -1,67 +1,72 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Mac Automation Dashboard</title>
-  <script>
-    let macUser = "";
-    let macIp = "";
+    <title>Mac Automation Dashboard</title>
+    <script>
+        let macUser = "";
+        let macIp = "";
 
-    async function saveCredentials() {
-      macUser = document.getElementById("mac_user").value;
-      macIp = document.getElementById("mac_ip").value;
-      if (!macUser || !macIp) {
-        alert("Enter both Mac Username and IP!");
-        return;
-      }
-      alert("Saved credentials for " + macUser + "@" + macIp);
-    }
-
-    async function runScript(scriptName, args=[]) {
-      const payload = {
-        mac_user: macUser,
-        mac_ip: macIp,
-        script: scriptName,
-        args: args
-      };
-
-      try {
-        let resp = await fetch("http://127.0.0.1:5001/run_script", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        let result = await resp.json();
-        console.log(result);
-        if (result.status === "success") {
-          alert("Command sent: " + result.command);
-        } else {
-          alert("Error: " + result.message);
+        async function saveCredentials() {
+            macUser = document.getElementById("mac_user").value;
+            macIp = document.getElementById("mac_ip").value;
+            if (!macUser || !macIp) {
+                alert("Enter both Mac Username and IP!");
+                return;
+            }
+            alert("Saved credentials for " + macUser + "@" + macIp);
         }
-      } catch (err) {
-        alert("Could not reach helper on this device. Make sure helper.py is running!");
-      }
-    }
-  </script>
+
+        async function runScript(scriptName, args = []) {
+            const payload = {
+                mac_user: macUser,
+                mac_ip: macIp,
+                script: scriptName,
+                args: args
+            };
+
+            try {
+                let resp = await fetch("http://127.0.0.1:5001/run_script", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                let result = await resp.json();
+                console.log(result);
+                if (result.status === "success") {
+                    alert("Command sent: " + result.command);
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (err) {
+                alert("Could not reach helper on this device. Make sure helper.py is running!");
+            }
+        }
+    </script>
 </head>
+
 <body>
-  <h2>Mac Automation</h2>
+    <h2>Mac Automation</h2>
 
-  <div>
-    <label>Mac Username:</label>
-    <input type="text" id="mac_user" placeholder="e.g. versamacmini"><br><br>
-    <label>Mac IP:</label>
-    <input type="text" id="mac_ip" placeholder="e.g. 10.135.1.142"><br><br>
-    <button onclick="saveCredentials()">Save</button>
-  </div>
+    <div>
+        <label>Mac Username:</label>
+        <input type="text" id="mac_user"><br><br>
+        <label>Mac IP:</label>
+        <input type="text" id="mac_ip"><br><br>
+        <button onclick="saveCredentials()">Save</button>
+    </div>
 
-  <hr>
+    <hr>
 
-  <h3>Automation Options</h3>
-  <button onclick="runScript('register.scpt', ['vpn.versa-networks.com','VersaNetworks','user@versa.com','Password123'])">Register</button>
-  <button onclick="runScript('connect.scpt')">Connect</button>
-  <button onclick="runScript('disconnect.scpt')">Disconnect</button>
-  <button onclick="runScript('fetch.scpt')">Fetch Details</button>
-  <button onclick="runScript('uninstall.scpt')">Uninstall</button>
-  <button onclick="runScript('dummy.scpt')">Open SSH</button>
+    <h3>Automation Options</h3>
+    <button
+        onclick="runScript('register.scpt', ['vpn.versa-networks.com','VersaNetworks','user@versa.com','Password123'])">Register</button>
+    <button onclick="runScript('connect.scpt')">Connect</button>
+    <button onclick="runScript('sometask.scpt')">Some Task</button>
+    <button onclick="runScript('disconnect.scpt')">Disconnect</button>
+    <button onclick="runScript('fetch.scpt')">Fetch Details</button>
+    <button onclick="runScript('uninstall.scpt')">Uninstall</button>
+    <button onclick="runScript('dummy.scpt')">Open SSH</button>
 </body>
+
 </html>
