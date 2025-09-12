@@ -27,7 +27,7 @@ def run_script():
     script = data.get("script")
     args = data.get("args", [])
 
-    cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/automation/{script} {" ".join(args)}"'
+    cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/Documents/automation/{script} {" ".join(args)}"'
 
     try:
         open_terminal_and_run(cmd)
