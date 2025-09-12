@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mac SASE Automation</title>
+</head>
+<body>
+    <h2>Mac SASE Automation Dashboard</h2>
+
+    <form id="automationForm">
+        <label>Mac IP:</label>
+        <input type="text" name="mac_ip" required><br>
+
+        <label>Mac Username:</label>
+        <input type="text" name="mac_user" required><br>
+
+        <label>FQDN:</label>
+        <input type="text" name="fqdn"><br>
+
+        <label>Enterprise Name:</label>
+        <input type="text" name="ent_name"><br>
+
+        <label>User ID:</label>
+        <input type="text" name="user_id"><br>
+
+        <label>Password:</label>
+        <input type="password" name="password"><br>
+
+        <select name="action">
+            <option value="register">Register</option>
+            <option value="connect">Connect</option>
+            <option value="disconnect">Disconnect</option>
+            <option value="fetch">Fetch Details</option>
+            <option value="uninstall">Uninstall</option>
+            <option value="ssh">Open SSH</option>
+        </select><br><br>
+
+        <button type="button" onclick="run()">Run</button>
+    </form>
+
+    <pre id="output"></pre>
+
+    <script>
+        async function run() {
+            const form = document.getElementById("automationForm");
+            const formData = new FormData(form);
+
+            const response = await fetch("/run", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById("output").innerText = result.success
+                ? "✅ Success:\n" + result.output
+                : "❌ Failed:\n" + result.output;
+        }
+    </script>
+</body>
+</html>
