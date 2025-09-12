@@ -1,38 +1,43 @@
 from flask import Flask, request, jsonify
 import subprocess
+import platform
 
 app = Flask(__name__)
 
-@app.route("/run", methods=["POST"])
-def run():
-    data = request.get_json()
-    action = data.get("action")
-    mac_ip = data.get("mac_ip")
+def open_terminal_and_run(command):
+    system = platform.system()
+
+    if system == "Windows":
+        # Opens a new cmd window and runs command
+        subprocess.Popen(["start", "cmd", "/k", command], shell=True)
+
+    elif system == "Darwin":  # macOS
+        # Opens Terminal and runs command
+        osa = f'tell app "Terminal" to do script "{command}"'
+        subprocess.Popen(["osascript", "-e", osa])
+
+    elif system == "Linux":
+        subprocess.Popen(["x-terminal-emulator", "-e", command])
+
+    else:
+        raise Exception(f"Unsupported system: {system}")
+
+@app.route("/run_script", methods=["POST"])
+def run_script():
+    data = request.json
     mac_user = data.get("mac_user")
-    fqdn = data.get("fqdn")
-    ent_name = data.get("ent_name")
-    user_id = data.get("user_id")
-    password = data.get("password")
+    mac_ip = data.get("mac_ip")
+    script = data.get("script")   # e.g., register.scpt
+    args = data.get("args", [])
+
+    # Build SSH command
+    cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/automation/{script} {" ".join(args)}"'
 
     try:
-        if action in ["register", "connect"]:
-            cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/automation/{action}.scpt \'{fqdn}\' \'{ent_name}\' \'{user_id}\' \'{password}\'"'
-        elif action in ["disconnect", "fetch", "uninstall"]:
-            cmd = f'ssh {mac_user}@{mac_ip} "osascript ~/automation/{action}.scpt"'
-        elif action == "ssh":
-            cmd = f'start cmd /k ssh {mac_user}@{mac_ip}'
-        else:
-            return jsonify({"success": False, "output": "Invalid action"})
-
-        process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-        if process.returncode == 0:
-            return jsonify({"success": True, "output": process.stdout})
-        else:
-            return jsonify({"success": False, "output": process.stderr})
-
+        open_terminal_and_run(cmd)
+        return jsonify({"status": "success", "command": cmd})
     except Exception as e:
-        return jsonify({"success": False, "output": str(e)})
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(port=5001)
+    app.run(host="127.0.0.1", port=5001, debug=True)

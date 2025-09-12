@@ -1,59 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mac SASE Automation</title>
+  <title>Mac Automation Dashboard</title>
+  <script>
+    let macUser = "";
+    let macIp = "";
+
+    async function saveCredentials() {
+      macUser = document.getElementById("mac_user").value;
+      macIp = document.getElementById("mac_ip").value;
+      if (!macUser || !macIp) {
+        alert("Enter both Mac Username and IP!");
+        return;
+      }
+      alert("Saved credentials for " + macUser + "@" + macIp);
+    }
+
+    async function runScript(scriptName, args=[]) {
+      const payload = {
+        mac_user: macUser,
+        mac_ip: macIp,
+        script: scriptName,
+        args: args
+      };
+
+      try {
+        let resp = await fetch("http://127.0.0.1:5001/run_script", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        let result = await resp.json();
+        console.log(result);
+        if (result.status === "success") {
+          alert("Command sent: " + result.command);
+        } else {
+          alert("Error: " + result.message);
+        }
+      } catch (err) {
+        alert("Could not reach helper on this device. Make sure helper.py is running!");
+      }
+    }
+  </script>
 </head>
 <body>
-    <h2>Mac SASE Automation Dashboard</h2>
+  <h2>Mac Automation</h2>
 
-    <form id="automationForm">
-        <label>Mac IP:</label>
-        <input type="text" name="mac_ip" required><br>
+  <div>
+    <label>Mac Username:</label>
+    <input type="text" id="mac_user" placeholder="e.g. versamacmini"><br><br>
+    <label>Mac IP:</label>
+    <input type="text" id="mac_ip" placeholder="e.g. 10.135.1.142"><br><br>
+    <button onclick="saveCredentials()">Save</button>
+  </div>
 
-        <label>Mac Username:</label>
-        <input type="text" name="mac_user" required><br>
+  <hr>
 
-        <label>FQDN:</label>
-        <input type="text" name="fqdn"><br>
-
-        <label>Enterprise Name:</label>
-        <input type="text" name="ent_name"><br>
-
-        <label>User ID:</label>
-        <input type="text" name="user_id"><br>
-
-        <label>Password:</label>
-        <input type="password" name="password"><br>
-
-        <select name="action">
-            <option value="register">Register</option>
-            <option value="connect">Connect</option>
-            <option value="disconnect">Disconnect</option>
-            <option value="fetch">Fetch Details</option>
-            <option value="uninstall">Uninstall</option>
-            <option value="ssh">Open SSH</option>
-        </select><br><br>
-
-        <button type="button" onclick="run()">Run</button>
-    </form>
-
-    <pre id="output"></pre>
-
-    <script>
-        async function run() {
-            const form = document.getElementById("automationForm");
-            const formData = new FormData(form);
-
-            const response = await fetch("/run", {
-                method: "POST",
-                body: formData
-            });
-
-            const result = await response.json();
-            document.getElementById("output").innerText = result.success
-                ? "✅ Success:\n" + result.output
-                : "❌ Failed:\n" + result.output;
-        }
-    </script>
+  <h3>Automation Options</h3>
+  <button onclick="runScript('register.scpt', ['vpn.versa-networks.com','VersaNetworks','user@versa.com','Password123'])">Register</button>
+  <button onclick="runScript('connect.scpt')">Connect</button>
+  <button onclick="runScript('disconnect.scpt')">Disconnect</button>
+  <button onclick="runScript('fetch.scpt')">Fetch Details</button>
+  <button onclick="runScript('uninstall.scpt')">Uninstall</button>
+  <button onclick="runScript('dummy.scpt')">Open SSH</button>
 </body>
 </html>
