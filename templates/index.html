@@ -24,7 +24,7 @@
                 });
                 let result = await resp.json();
                 if (result.success) {
-                    alert("Connection successful to " + macUser + "@" + macIp);
+                    alert("Connection pingable to " + macUser + "@" + macIp);
                 } else {
                     alert("Connection failed: " + result.output);
                 }
@@ -35,7 +35,7 @@
 
         async function runScript(scriptName, args = []) {
             if (!macUser || !macIp) {
-                alert("Enter and check connection first!");
+                alert("Connect to the device first!");
                 return;
             }
 
@@ -54,7 +54,7 @@
                 });
                 let result = await resp.json();
                 if (result.success && result.command) {
-                    alert("Command sent: " + result.command);
+                    alert("Command sent");
                 } else {
                     alert("Failed: " + (result.output || "Unknown error"));
                 }
@@ -64,31 +64,31 @@
         }
 
         function handleRegisterConnect(type) {
-            const vpnServer = document.getElementById("fqdn").value;
-            const org = document.getElementById("ent_name").value;
-            const user = document.getElementById("user_id").value;
-            const pwd = document.getElementById("user_pw").value;
+            const var_fqdn = document.getElementById("fqdn").value;
+            const var_ent_name = document.getElementById("ent_name").value;
+            const var_user_id = document.getElementById("user_id").value;
+            const var_user_pw = document.getElementById("user_pw").value;
 
-            if (!vpnServer || !org || !user || !pwd) {
-                alert("Enter VPN credentials first!");
+            if (!var_fqdn || !var_ent_name || !var_user_id || !var_user_pw) {
+                alert("Enter the credentials!");
                 return;
             }
 
-            const args = [vpnServer, org, user, pwd];
+            const args = [var_fqdn, var_ent_name, var_user_id, var_user_pw];
             runScript(type === "register" ? "auto3.scpt" : "auto3.scpt", args);
         }
     </script>
 </head>
 
 <body>
-    <h2>Mac Automation</h2>
+    <h1>Mac Automation</h1>
 
     <div>
         <label>Mac Username:</label>
         <input type="text" id="mac_user"><br><br>
         <label>Mac IP:</label>
         <input type="text" id="mac_ip"><br><br>
-        <button onclick="checkConnection()">Check Connection</button>
+        <button onclick="checkConnection()">Connect</button>
     </div>
 
     <hr>
@@ -111,7 +111,7 @@
     <button onclick="handleRegisterConnect('connect')">Connect</button>
     <button onclick="runScript('disconnect.scpt')">Disconnect</button>
     <button onclick="runScript('fetching_details.scpt')">Fetch Details</button>
-    <button onclick="runScript('uninstall_SASE.scpt')">Uninstall</button>
+    <button onclick="runScript('uninstall_SASE.scpt')">Uninstall</button><br>
 
     <hr>
 
