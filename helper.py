@@ -9,16 +9,15 @@ CORS(app)
 
 @app.route("/check_connection", methods=["POST"])
 def check_connection():
-    """Ping the given IP to check reachability"""
     data = request.get_json()
     mac_ip = data.get("mac_ip")
 
     try:
         system = platform.system()
         if system == "Windows":
-            cmd = ["ping", "-n", "1", "-w", "1000", mac_ip]  # 1 packet, 1s timeout
+            cmd = ["ping", "-n", "1", "-w", "1000", mac_ip]
         else:
-            cmd = ["ping", "-c", "1", "-W", "1", mac_ip]  # Linux/Mac
+            cmd = ["ping", "-c", "1", "-W", "1", mac_ip]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
@@ -47,28 +46,25 @@ def run_script():
         else:
             remote_cmd = f"osascript $HOME/Documents/automation/{script}"
 
-        ssh_cmd = f'ssh {mac_user}@{mac_ip} "{remote_cmd}"'
-        print("DEBUG: Running ->", ssh_cmd)
+        ssh_cmd = ["ssh", f"{mac_user}@{mac_ip}", remote_cmd]
 
         system = platform.system()
         if system == "Windows":
             subprocess.Popen(
-                ["cmd.exe", "/k", ssh_cmd],
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                ["cmd.exe", "/k"] + ssh_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         elif system == "Darwin":
             subprocess.Popen(
                 [
                     "osascript",
                     "-e",
-                    f'tell application "Terminal" to do script "{ssh_cmd}"',
+                    f'tell application "Terminal" to do script "{" ".join(ssh_cmd)}"',
                 ]
             )
         else:
-            subprocess.Popen(["gnome-terminal", "--", "bash", "-c", ssh_cmd])
+            subprocess.Popen(["gnome-terminal", "--"] + ssh_cmd)
 
-        return jsonify({"success": True, "command": ssh_cmd})
-
+        return jsonify({"success": True, "command": " ".join(ssh_cmd)})
     except Exception as e:
         return jsonify({"success": False, "output": str(e)}), 500
 
