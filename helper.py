@@ -13,7 +13,7 @@ def run_script():
         data = request.get_json()
         mac_user = data.get("mac_user")
         mac_ip = data.get("mac_ip")
-        script = data.get("script")  # e.g., sometest.scpt
+        script = data.get("script")
 
         if not mac_user or not mac_ip or not script:
             return jsonify({"success": False, "output": "Missing inputs"}), 400
@@ -27,8 +27,7 @@ def run_script():
             subprocess.Popen(
                 ["cmd.exe", "/k", ssh_cmd], creationflags=subprocess.CREATE_NEW_CONSOLE
             )
-
-        elif system == "Darwin":  # macOS
+        elif system == "Darwin":
             subprocess.Popen(
                 [
                     "osascript",
@@ -36,7 +35,7 @@ def run_script():
                     f'tell application "Terminal" to do script "{ssh_cmd}"',
                 ]
             )
-        else:  # Linux
+        else:
             subprocess.Popen(["gnome-terminal", "--", "bash", "-c", ssh_cmd])
 
         return jsonify(
