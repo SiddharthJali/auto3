@@ -7,6 +7,28 @@ app = Flask(__name__)
 CORS(app)
 
 
+@app.route("/check_connection", methods=["POST"])
+def check_connection():
+    """Ping the given IP to check reachability"""
+    data = request.get_json()
+    mac_ip = data.get("mac_ip")
+
+    try:
+        system = platform.system()
+        if system == "Windows":
+            cmd = ["ping", "-n", "1", "-w", "1000", mac_ip]  # 1 packet, 1s timeout
+        else:
+            cmd = ["ping", "-c", "1", "-W", "1", mac_ip]  # Linux/Mac
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "output": result.stdout or result.stderr})
+    except Exception as e:
+        return jsonify({"success": False, "output": str(e)})
+
+
 @app.route("/run_script", methods=["POST"])
 def run_script():
     try:
@@ -14,18 +36,25 @@ def run_script():
         mac_user = data.get("mac_user")
         mac_ip = data.get("mac_ip")
         script = data.get("script")
+        args = data.get("args", [])
 
         if not mac_user or not mac_ip or not script:
             return jsonify({"success": False, "output": "Missing inputs"}), 400
 
-        ssh_cmd = f"ssh {mac_user}@{mac_ip} 'osascript \"$HOME/Documents/automation/{script}\"'"
+        if args:
+            args_str = " ".join([f"'{a}'" for a in args])
+            remote_cmd = f"osascript $HOME/Documents/automation/{script} {args_str}"
+        else:
+            remote_cmd = f"osascript $HOME/Documents/automation/{script}"
+
+        ssh_cmd = f'ssh {mac_user}@{mac_ip} "{remote_cmd}"'
+        print("DEBUG: Running ->", ssh_cmd)
 
         system = platform.system()
-
         if system == "Windows":
-            ssh_cmd = f"ssh {mac_user}@{mac_ip} osascript '/Users/versamacmini/Documents/automation/{script}'"
             subprocess.Popen(
-                ["cmd.exe", "/k", ssh_cmd], creationflags=subprocess.CREATE_NEW_CONSOLE
+                ["cmd.exe", "/k", ssh_cmd],
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
         elif system == "Darwin":
             subprocess.Popen(
@@ -38,9 +67,7 @@ def run_script():
         else:
             subprocess.Popen(["gnome-terminal", "--", "bash", "-c", ssh_cmd])
 
-        return jsonify(
-            {"success": True, "output": "SSH script started in new terminal"}
-        )
+        return jsonify({"success": True, "command": ssh_cmd})
 
     except Exception as e:
         return jsonify({"success": False, "output": str(e)}), 500

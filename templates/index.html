@@ -7,17 +7,38 @@
         let macUser = "";
         let macIp = "";
 
-        async function saveCredentials() {
+        async function checkConnection() {
             macUser = document.getElementById("mac_user").value;
             macIp = document.getElementById("mac_ip").value;
+
             if (!macUser || !macIp) {
                 alert("Enter both Mac Username and IP!");
                 return;
             }
-            alert("Saved credentials for " + macUser + "@" + macIp);
+
+            try {
+                let resp = await fetch("http://127.0.0.1:5001/check_connection", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mac_user: macUser, mac_ip: macIp })
+                });
+                let result = await resp.json();
+                if (result.success) {
+                    alert("Connection successful to " + macUser + "@" + macIp);
+                } else {
+                    alert("Connection failed: " + result.output);
+                }
+            } catch (err) {
+                alert("helper.py not running on this device!");
+            }
         }
 
         async function runScript(scriptName, args = []) {
+            if (!macUser || !macIp) {
+                alert("Enter and check connection first!");
+                return;
+            }
+
             const payload = {
                 mac_user: macUser,
                 mac_ip: macIp,
@@ -32,15 +53,29 @@
                     body: JSON.stringify(payload)
                 });
                 let result = await resp.json();
-                console.log(result);
-                if (result.status === "success") {
+                if (result.success && result.command) {
                     alert("Command sent: " + result.command);
                 } else {
-                    alert("Error: " + result.message);
+                    alert("Failed: " + (result.output || "Unknown error"));
                 }
             } catch (err) {
                 alert("helper.py is not running in this device!");
             }
+        }
+
+        function handleRegisterConnect(type) {
+            const vpnServer = document.getElementById("fqdn").value;
+            const org = document.getElementById("ent_name").value;
+            const user = document.getElementById("user_id").value;
+            const pwd = document.getElementById("user_pw").value;
+
+            if (!vpnServer || !org || !user || !pwd) {
+                alert("Enter VPN credentials first!");
+                return;
+            }
+
+            const args = [vpnServer, org, user, pwd];
+            runScript(type === "register" ? "auto3.scpt" : "auto3.scpt", args);
         }
     </script>
 </head>
@@ -53,20 +88,34 @@
         <input type="text" id="mac_user"><br><br>
         <label>Mac IP:</label>
         <input type="text" id="mac_ip"><br><br>
-        <button onclick="saveCredentials()">Save</button>
+        <button onclick="checkConnection()">Check Connection</button>
     </div>
 
     <hr>
 
+    <h3>VPN Credentials (for Register/Connect)</h3>
+    <label>Enter FQDN:</label>
+    <input type="text" id="fqdn"><br><br>
+    <label>Enter Enterprise Name:</label>
+    <input type="text" id="ent_name"><br><br>
+    <label>Enter User ID:</label>
+    <input type="text" id="user_id"><br><br>
+    <label>Enter User Password:</label>
+    <input type="password" id="user_pw"><br><br>
+
+    <hr>
+
     <h3>Automation Options</h3>
-    <!-- <button
-        onclick="runScript('register.scpt', ['vpn.versa-networks.com','VersaNetworks','user@versa.com','Password123'])">Register</button> -->
-    <!-- <button onclick="runScript('connect.scpt')">Connect</button> -->
     <button onclick="runScript('sometest.scpt')">Some Test</button>
-    <!-- <button onclick="runScript('disconnect.scpt')">Disconnect</button>
-    <button onclick="runScript('fetch.scpt')">Fetch Details</button>
-    <button onclick="runScript('uninstall.scpt')">Uninstall</button>
-    <button onclick="runScript('dummy.scpt')">Open SSH</button> -->
+    <button onclick="handleRegisterConnect('register')">Register</button>
+    <button onclick="handleRegisterConnect('connect')">Connect</button>
+    <button onclick="runScript('disconnect.scpt')">Disconnect</button>
+    <button onclick="runScript('fetching_details.scpt')">Fetch Details</button>
+    <button onclick="runScript('uninstall_SASE.scpt')">Uninstall</button>
+
+    <hr>
+
+    <a target="_blank" href="https://github.com/SiddharthJali/auto3/blob/main/helper.py">Download the helper.py file</a>
 </body>
 
 </html>
